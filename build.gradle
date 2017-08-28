@@ -1,0 +1,32 @@
+apply plugin: 'eclipse'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+version = '0.0.1'
+group = 'wellsb1'
+
+
+repositories { 
+   mavenLocal()
+   mavenCentral() 
+}
+
+
+/********************************************************
+ * by default, targetCompatibility == sourceCompatibility  
+ */
+sourceCompatibility = 1.6
+
+dependencies {
+	//compile 'wellsb1:forty11-j:0.0.1'
+}
+
+
+jar {
+    baseName 'forty11-s'
+}
+
+
+
+
+
