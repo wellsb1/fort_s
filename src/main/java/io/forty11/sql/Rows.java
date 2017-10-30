@@ -258,8 +258,8 @@ public class Rows extends ArrayList<Rows.Row>
          }
          catch (Exception ex)
          {
-            System.err.println("Trying to get invalid key '" + key + "' from row.  Valide keys are " + keys.keys);
-            ex.printStackTrace();
+            //System.err.println("Trying to get invalid key '" + key + "' from row.  Valide keys are " + keys.keys);
+            // ex.printStackTrace();
             //
             //            int idx = indexOf(key);
             //            System.out.println(idx);
