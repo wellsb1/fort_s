@@ -1,9 +1,15 @@
+/*
+plugins {
+	// Releasing to Maven Central from Gradle without dealing with Nexus UI by using 'gradle closeAndReleaseRepository'
+    id 'io.codearte.nexus-staging' version '0.11.0'
+}
+*/
+
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
-version = '0.0.1'
-group = 'wellsb1'
 
 
 repositories { 
@@ -11,22 +17,100 @@ repositories {
    mavenCentral() 
 }
 
-
 /********************************************************
  * by default, targetCompatibility == sourceCompatibility  
  */
 sourceCompatibility = 1.6
 
-dependencies {
-	//compile 'wellsb1:forty11-j:0.0.1'
+
+/*
+ ************************************************************
+ * Everything below this is necessary for pushing for Maven 
+ * Central
+ ************************************************************
+ */
+version = '0.0.1'
+group = 'com.github.wellsb1'
+
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+      tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+      }
+    }
+  }
+ 
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar, javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }
 
 
-jar {
-    baseName 'forty11-s'
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+	
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+	
+      pom.project {
+        name 'FortS'
+        packaging 'jar'
+        // optionally artifactId can be defined here 
+        description 'Java SQL Utilities.'
+        url 'https://github.com/wellsb1/fort_s'
+
+        scm {  
+          url 'http://github.com/wellsb1/fort_s/tree/master'
+          connection 'scm:git:git://github.com/wellsb1/fort_s.git'
+          developerConnection 'scm:git:ssh://git@github.com:wellsb1/fort_s.git'
+          
+        }
+
+        licenses {
+          license {
+            name 'The Apache License, Version 2.0'
+            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+
+        developers {
+          developer {
+            id 'kfrankic'
+            //name ''
+            //email ''
+          }
+          developer {
+            id 'tcollins'
+          }
+          developer {
+            id 'wellsb1'
+          }
+        }
+      }
+    }
+  }
 }
-
-
-
 
 
