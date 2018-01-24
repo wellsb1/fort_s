@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package io.forty11.sql;
+package io.forty11.sql;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,12 +94,12 @@ public class Rows extends ArrayList<Rows.Row>
     *
     * @author Wells Burke
     */
-   public class Row implements Map<String, Object>
+   public static class Row implements Map<String, Object>
    {
       RowKeys      keys   = null;
       List<Object> values = null;
 
-      Row()
+      public Row()
       {
          this.keys = new RowKeys();
          this.values = new ArrayList();
@@ -409,7 +409,7 @@ public class Rows extends ArrayList<Rows.Row>
 
    }
 
-   private class RowKeys
+   private static class RowKeys
    {
       List<String>         keys   = new ArrayList();
       Map<String, Integer> lc     = new HashMap();

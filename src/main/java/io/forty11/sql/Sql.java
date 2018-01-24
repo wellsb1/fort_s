@@ -93,7 +93,7 @@ public class Sql
                rs = stmt.executeQuery(sql);
             }
             if (rs.next())
-               return rs.getObject(0);
+               return rs.getObject(1);
          }
          else
          {
@@ -195,7 +195,7 @@ public class Sql
 
    public static boolean isSelect(String sql)
    {
-      return sql != null && sql.toLowerCase().indexOf("select ") >= 0;
+      return sql != null && sql.toLowerCase().trim().startsWith("select ");
    }
 
    public static Rows selectRows(Connection conn, String sql, Object... vals) throws Exception
@@ -354,7 +354,7 @@ public class Sql
 
    public static boolean isInsert(String sql)
    {
-      return sql.toLowerCase().indexOf("insert ") >= 0;
+      return sql.toLowerCase().trim().startsWith("insert ");
    }
 
    public static String buildInsertSQL(String tableName, Object[] columnNameArray)
@@ -483,7 +483,7 @@ public class Sql
 
    public static boolean isUpdate(String sql)
    {
-      return sql.toLowerCase().trim().indexOf("update ") >= 0;
+      return sql.toLowerCase().trim().startsWith("update ");
    }
 
    public static int updateRow(Connection conn, String tableName, String keyCol, String keyVal, Map row) throws Exception
@@ -567,7 +567,7 @@ public class Sql
 
    public boolean isDelete(String sql)
    {
-      return sql.toLowerCase().indexOf("delete ") >= 0;
+      return sql.toLowerCase().trim().startsWith("delete ");
    }
 
    public static int deleteRow(Connection conn, String table, String keyCol, Object keyVal) throws Exception
