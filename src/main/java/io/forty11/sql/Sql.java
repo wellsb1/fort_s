@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package io.forty11.sql;
+package io.forty11.sql;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -334,7 +334,16 @@ public class Sql
             if (val != null)
             {
                val = convert(val, field.getType());
-               field.set(o, val);
+               
+               if(val != null && val instanceof Collection)
+               {
+                  Collection coll = (Collection)field.get(o);
+                  coll.addAll((Collection)val);
+               }
+               else
+               {
+                  field.set(o, val);   
+               }
             }
          }
          catch (Exception ex)
@@ -885,16 +894,62 @@ public class Sql
          if (type.equals(Long.class) || type.equals(long.class))
          {
             value = ((Number) value).longValue();
+            return value;
          }
          else if (type.equals(Integer.class) || type.equals(int.class))
          {
             value = ((Number) value).intValue();
+            return value;
          }
          else if (type.isAssignableFrom(long.class))
          {
             value = ((Number) value).longValue();
+            return value;
          }
       }
+
+      if (value == null)
+         return null;
+
+      String str = value + "";
+
+      if (String.class.isAssignableFrom(type))
+      {
+         return str;
+      }
+      else if (boolean.class.isAssignableFrom(type))
+      {
+         str = str.toLowerCase();
+         return str.equals("true") || str.equals("t") || str.equals("1");
+      }
+      else if (int.class.isAssignableFrom(type))
+      {
+         return Integer.parseInt(str);
+      }
+      else if (long.class.isAssignableFrom(type))
+      {
+         return Long.parseLong(str);
+      }
+      else if (float.class.isAssignableFrom(type))
+      {
+         return Float.parseFloat(str);
+      }
+      else if (Collection.class.isAssignableFrom(type))
+      {
+         Collection list = new ArrayList();
+         String[] parts = str.split(",");
+         for (String part : parts)
+         {
+            part = part.trim();
+            list.add(part);
+         }
+         return list;
+      }
+      else
+      {
+         System.err.println("Can't cast: " + str + " - class " + type.getName());
+      }
+
 
       return value;
    }

@@ -2,7 +2,7 @@ apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'maven'
 
-version = '0.0.2'
+version = '0.0.3'
 group = 'wellsb1'
 
 
@@ -18,7 +18,7 @@ repositories {
 sourceCompatibility = 1.6
 
 dependencies {
-	//compile 'wellsb1:forty11-j:0.0.1'
+	
 }
 
 
