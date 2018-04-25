@@ -16,6 +16,13 @@ Java SQL Utilities
 
 ## ChangeLog
 
+2018-04-20 0.0.4 --------------------------------
+
+ * Improved casting and made generic to Class param type
+ * Made selectObject(s) generic based on Class arg type
+ * Made selectObject return null if no rows found
+  
+
 2018-04-04 0.0.3 --------------------------------
  
  * Added ability to set a collection of strings on an object from a comma separated list db column value

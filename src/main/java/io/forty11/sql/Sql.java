@@ -302,11 +302,26 @@ public class Sql
       return objs;
    }
 
-   public static Object selectObject(Connection conn, String sql, Object o, Object... vals) throws Exception
+   public static <T> T selectObject(Connection conn, String sql, Class<T> clazz, Object... vals) throws Exception
    {
       Row row = selectRow(conn, sql, vals);
       if (row != null)
+      {
+         Object o = clazz.newInstance();
          poplulate(o, row);
+         return (T) o;
+      }
+
+      return null;
+   }
+
+   public static <T> T selectObject(Connection conn, String sql, T o, Object... vals) throws Exception
+   {
+      Row row = selectRow(conn, sql, vals);
+      if (row != null)
+      {
+         poplulate(o, row);
+      }
 
       return o;
    }
@@ -334,15 +349,15 @@ public class Sql
             if (val != null)
             {
                val = convert(val, field.getType());
-               
-               if(val != null && val instanceof Collection)
+
+               if (val != null && val instanceof Collection)
                {
-                  Collection coll = (Collection)field.get(o);
-                  coll.addAll((Collection)val);
+                  Collection coll = (Collection) field.get(o);
+                  coll.addAll((Collection) val);
                }
                else
                {
-                  field.set(o, val);   
+                  field.set(o, val);
                }
             }
          }
@@ -874,37 +889,42 @@ public class Sql
       }
    }
 
-   public static Object convert(Object value, Class type)
+   public static <T> T convert(Object value, Class<T> type)
    {
+      if (type.isAssignableFrom(value.getClass()))
+      {
+         return (T) value;
+      }
+
       if (type.equals(boolean.class) || type.equals(Boolean.class))
       {
          if (Number.class.isAssignableFrom(value.getClass()))
          {
             long num = Long.parseLong(value + "");
             if (num <= 0)
-               return Boolean.FALSE;
+               return (T) Boolean.FALSE;
             else
-               return Boolean.TRUE;
+               return (T) Boolean.TRUE;
          }
          if (value instanceof Boolean)
-            return value;
+            return (T) value;
       }
       if (value instanceof Number)
       {
          if (type.equals(Long.class) || type.equals(long.class))
          {
             value = ((Number) value).longValue();
-            return value;
+            return (T) value;
          }
          else if (type.equals(Integer.class) || type.equals(int.class))
          {
             value = ((Number) value).intValue();
-            return value;
+            return (T) value;
          }
          else if (type.isAssignableFrom(long.class))
          {
             value = ((Number) value).longValue();
-            return value;
+            return (T) value;
          }
       }
 
@@ -915,24 +935,24 @@ public class Sql
 
       if (String.class.isAssignableFrom(type))
       {
-         return str;
+         return (T) str;
       }
       else if (boolean.class.isAssignableFrom(type))
       {
          str = str.toLowerCase();
-         return str.equals("true") || str.equals("t") || str.equals("1");
+         return (T) (Boolean) (str.equals("true") || str.equals("t") || str.equals("1"));
       }
       else if (int.class.isAssignableFrom(type))
       {
-         return Integer.parseInt(str);
+         return (T) (Integer) Integer.parseInt(str);
       }
       else if (long.class.isAssignableFrom(type))
       {
-         return Long.parseLong(str);
+         return (T) (Long) Long.parseLong(str);
       }
       else if (float.class.isAssignableFrom(type))
       {
-         return Float.parseFloat(str);
+         return (T) (Float) Float.parseFloat(str);
       }
       else if (Collection.class.isAssignableFrom(type))
       {
@@ -943,15 +963,14 @@ public class Sql
             part = part.trim();
             list.add(part);
          }
-         return list;
+         return (T) list;
       }
       else
       {
          System.err.println("Can't cast: " + str + " - class " + type.getName());
       }
 
-
-      return value;
+      return (T) value;
    }
 
    public static Map<String, LinkedHashSet> getMetaData(Connection conn) throws Exception
