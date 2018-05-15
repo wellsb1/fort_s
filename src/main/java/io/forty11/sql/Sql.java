@@ -109,7 +109,7 @@ public class Sql
             else
             {
                stmt = conn.createStatement();
-               stmt.execute(sql);
+               stmt.execute(sql,Statement.RETURN_GENERATED_KEYS);
             }
 
             if (isInsert(sql))

@@ -16,6 +16,11 @@ Java SQL Utilities
 
 ## ChangeLog
 
+2018-04-20 0.0.5 --------------------------------
+ 
+ * Fixed auto generated key retrieval error when inserting an empty row 
+
+
 2018-04-20 0.0.4 --------------------------------
 
  * Improved casting and made generic to Class param type
