@@ -3,24 +3,14 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 version = '0.0.5'
-group = 'wellsb1'
-
+group = 'com.github.wellsb1'
 
 repositories { 
    mavenLocal()
    mavenCentral() 
 }
 
-
-/********************************************************
- * by default, targetCompatibility == sourceCompatibility  
- */
 sourceCompatibility = 1.6
-
-dependencies {
-	
-}
-
 
 jar {
     baseName 'forty11-s'
