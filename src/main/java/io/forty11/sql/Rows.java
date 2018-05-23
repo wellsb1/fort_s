@@ -91,15 +91,15 @@ public class Rows extends ArrayList<Rows.Row>
 
    /**
     * Case insensitive map implementation
-    *
+    * 
     * @author Wells Burke
     */
-   public static class Row implements Map<String, Object>
+   public class Row implements Map<String, Object>
    {
       RowKeys      keys   = null;
       List<Object> values = null;
 
-      public Row()
+      Row()
       {
          this.keys = new RowKeys();
          this.values = new ArrayList();
@@ -258,8 +258,8 @@ public class Rows extends ArrayList<Rows.Row>
          }
          catch (Exception ex)
          {
-            //System.err.println("Trying to get invalid key '" + key + "' from row.  Valide keys are " + keys.keys);
-            // ex.printStackTrace();
+            System.err.println("Trying to get invalid key '" + key + "' from row.  Valide keys are " + keys.keys);
+            ex.printStackTrace();
             //
             //            int idx = indexOf(key);
             //            System.out.println(idx);
@@ -409,7 +409,7 @@ public class Rows extends ArrayList<Rows.Row>
 
    }
 
-   private static class RowKeys
+   private class RowKeys
    {
       List<String>         keys   = new ArrayList();
       Map<String, Integer> lc     = new HashMap();

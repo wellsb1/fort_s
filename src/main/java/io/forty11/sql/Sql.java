@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -31,13 +29,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.sql.Types;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,7 +43,7 @@ import io.forty11.sql.Rows.Row;
 
 /**
  * TODO: http://www.symantec.com/connect/articles/detection-sql-injection-and-cross-site-scripting-attacks
- *
+ * 
  */
 public class Sql
 {
@@ -69,8 +63,8 @@ public class Sql
 
    public static Object execute(Connection conn, String sql, Object... vals) throws Exception
    {
-      if (vals != null && vals.length == 1 && vals[0] instanceof Collection)
-         vals = ((Collection) vals[0]).toArray();
+      if (vals != null && vals.length == 1 && vals[0] instanceof List)
+         vals = ((List) vals[0]).toArray();
 
       Statement stmt = null;
       ResultSet rs = null;
@@ -109,7 +103,7 @@ public class Sql
             else
             {
                stmt = conn.createStatement();
-               stmt.execute(sql,Statement.RETURN_GENERATED_KEYS);
+               stmt.execute(sql);
             }
 
             if (isInsert(sql))
@@ -195,7 +189,7 @@ public class Sql
 
    public static boolean isSelect(String sql)
    {
-      return sql != null && sql.toLowerCase().trim().startsWith("select ");
+      return isType("select", sql);
    }
 
    public static Rows selectRows(Connection conn, String sql, Object... vals) throws Exception
@@ -302,26 +296,11 @@ public class Sql
       return objs;
    }
 
-   public static <T> T selectObject(Connection conn, String sql, Class<T> clazz, Object... vals) throws Exception
+   public static Object selectObject(Connection conn, String sql, Object o, Object... vals) throws Exception
    {
       Row row = selectRow(conn, sql, vals);
       if (row != null)
-      {
-         Object o = clazz.newInstance();
          poplulate(o, row);
-         return (T) o;
-      }
-
-      return null;
-   }
-
-   public static <T> T selectObject(Connection conn, String sql, T o, Object... vals) throws Exception
-   {
-      Row row = selectRow(conn, sql, vals);
-      if (row != null)
-      {
-         poplulate(o, row);
-      }
 
       return o;
    }
@@ -349,16 +328,7 @@ public class Sql
             if (val != null)
             {
                val = convert(val, field.getType());
-
-               if (val != null && val instanceof Collection)
-               {
-                  Collection coll = (Collection) field.get(o);
-                  coll.addAll((Collection) val);
-               }
-               else
-               {
-                  field.set(o, val);
-               }
+               field.set(o, val);
             }
          }
          catch (Exception ex)
@@ -378,7 +348,7 @@ public class Sql
 
    public static boolean isInsert(String sql)
    {
-      return sql.toLowerCase().trim().startsWith("insert ");
+      return isType("insert", sql);
    }
 
    public static String buildInsertSQL(String tableName, Object[] columnNameArray)
@@ -507,7 +477,7 @@ public class Sql
 
    public static boolean isUpdate(String sql)
    {
-      return sql.toLowerCase().trim().startsWith("update ");
+      return isType("update", sql);
    }
 
    public static int updateRow(Connection conn, String tableName, String keyCol, String keyVal, Map row) throws Exception
@@ -591,7 +561,7 @@ public class Sql
 
    public boolean isDelete(String sql)
    {
-      return sql.toLowerCase().trim().startsWith("delete ");
+      return isType("delete", sql);
    }
 
    public static int deleteRow(Connection conn, String table, String keyCol, Object keyVal) throws Exception
@@ -778,25 +748,6 @@ public class Sql
       return sb.toString();
    }
 
-   public static String getQuotedStr(Collection vals, String quote)
-   {
-      StringBuffer sb = new StringBuffer();
-
-      int i = 0;
-      for (Object val : vals)
-      {
-         sb.append(quote).append(val).append(quote);
-         if (i < vals.size() - 1)
-         {
-            sb.append(", ");
-         }
-
-         i++;
-      }
-
-      return sb.toString();
-   }
-
    public static String getQuotedInClauseStr(Collection vals)
    {
       StringBuffer sb = new StringBuffer();
@@ -889,88 +840,38 @@ public class Sql
       }
    }
 
-   public static <T> T convert(Object value, Class<T> type)
+   public static Object convert(Object value, Class type)
    {
-      if (type.isAssignableFrom(value.getClass()))
-      {
-         return (T) value;
-      }
-
       if (type.equals(boolean.class) || type.equals(Boolean.class))
       {
          if (Number.class.isAssignableFrom(value.getClass()))
          {
             long num = Long.parseLong(value + "");
             if (num <= 0)
-               return (T) Boolean.FALSE;
+               return Boolean.FALSE;
             else
-               return (T) Boolean.TRUE;
+               return Boolean.TRUE;
          }
          if (value instanceof Boolean)
-            return (T) value;
+            return value;
       }
       if (value instanceof Number)
       {
          if (type.equals(Long.class) || type.equals(long.class))
          {
             value = ((Number) value).longValue();
-            return (T) value;
          }
          else if (type.equals(Integer.class) || type.equals(int.class))
          {
             value = ((Number) value).intValue();
-            return (T) value;
          }
          else if (type.isAssignableFrom(long.class))
          {
             value = ((Number) value).longValue();
-            return (T) value;
          }
       }
 
-      if (value == null)
-         return null;
-
-      String str = value + "";
-
-      if (String.class.isAssignableFrom(type))
-      {
-         return (T) str;
-      }
-      else if (boolean.class.isAssignableFrom(type))
-      {
-         str = str.toLowerCase();
-         return (T) (Boolean) (str.equals("true") || str.equals("t") || str.equals("1"));
-      }
-      else if (int.class.isAssignableFrom(type))
-      {
-         return (T) (Integer) Integer.parseInt(str);
-      }
-      else if (long.class.isAssignableFrom(type))
-      {
-         return (T) (Long) Long.parseLong(str);
-      }
-      else if (float.class.isAssignableFrom(type))
-      {
-         return (T) (Float) Float.parseFloat(str);
-      }
-      else if (Collection.class.isAssignableFrom(type))
-      {
-         Collection list = new ArrayList();
-         String[] parts = str.split(",");
-         for (String part : parts)
-         {
-            part = part.trim();
-            list.add(part);
-         }
-         return (T) list;
-      }
-      else
-      {
-         System.err.println("Can't cast: " + str + " - class " + type.getName());
-      }
-
-      return (T) value;
+      return value;
    }
 
    public static Map<String, LinkedHashSet> getMetaData(Connection conn) throws Exception
@@ -1023,131 +924,49 @@ public class Sql
       return fields;
    }
 
-   public static Object cast(Object object, String jdbcType)
+   public static boolean isType(String type, String sql)
    {
-      try
+      if (sql == null)
+         return false;
+
+      sql = sql.toLowerCase();
+      type = type.toLowerCase();
+
+      int select = sql.indexOf("select ");
+      int insert = sql.indexOf("insert ");
+      int update = sql.indexOf("update ");
+      int delete = sql.indexOf("delete ");
+
+      if ("select".equals(type))
       {
-         jdbcType = jdbcType.toUpperCase();
-         return cast(object, (Integer) Types.class.getField(jdbcType).get(null));
+         return leastGreaterThanEqualToZero(select, insert, update, delete);
       }
-      catch (Exception ex)
+      else if ("insert".equals(type))
       {
-         throw new RuntimeException("Error casting to type " + jdbcType + " for value " + object);
+         return leastGreaterThanEqualToZero(insert, select, update, delete);
       }
+      else if ("update".equals(type))
+      {
+         return leastGreaterThanEqualToZero(update, select, insert, delete);
+      }
+      else if ("delete".equals(type))
+      {
+         return leastGreaterThanEqualToZero(delete, select, insert, update);
+      }
+      return false;
    }
 
-   /**
-    * https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
-    * @param object
-    * @param sqlType
-    * @return
-    */
-   public static Object cast(Object object, int jdbcType)
+   static boolean leastGreaterThanEqualToZero(int... nums)
    {
-      try
+      if (nums[0] < 0)
+         return false;
+
+      for (int i = 1; i < nums.length; i++)
       {
-         if (object == null)
-            return null;
-
-         switch (jdbcType)
-         {
-            case Types.CHAR:
-            case Types.VARCHAR:
-            case Types.LONGNVARCHAR:
-               return object.toString();
-            case Types.NUMERIC:
-            case Types.DECIMAL:
-               return new BigDecimal(object.toString());
-            case Types.BIT:
-            case Types.BOOLEAN:
-               return object.toString().toLowerCase().startsWith("t") || object.toString().equals("1");
-            case Types.TINYINT:
-               return Byte.parseByte(object.toString());
-            case Types.SMALLINT:
-               return Short.parseShort(object.toString());
-            case Types.INTEGER:
-               return Integer.parseInt(object.toString());
-            case Types.BIGINT:
-               return Long.parseLong(object.toString());
-            case Types.FLOAT:
-            case Types.DOUBLE:
-               return Double.parseDouble(object.toString());
-            case Types.DATALINK:
-               return new URL(object.toString());
-
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-               throw new UnsupportedOperationException("Binary types are currently unsupporrted");
-
-            case Types.DATE:
-               return new java.sql.Date(date(object.toString()).getTime());
-            case Types.TIMESTAMP:
-               return new java.sql.Timestamp(date(object.toString()).getTime());
-            default :
-               throw new UnsupportedOperationException("JDBC Type: " + jdbcType + " is not yet supported");
-         }
+         if (nums[i] >= 0 && nums[i] < nums[0])
+            return false;
       }
-      catch (Exception ex)
-      {
-         throw new RuntimeException("Error casting to type " + jdbcType + " for value " + object);
-      }
-   }
-
-   public static Date date(String date)
-   {
-      try
-      {
-         //not supported in JDK 1.6
-         //         DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
-         //         TemporalAccessor accessor = timeFormatter.parse(date);
-         //         return Date.from(Instant.from(accessor));
-         return ISO8601Util.parse(date, new ParsePosition(0));
-      }
-      catch (Exception ex)
-      {
-
-      }
-      try
-      {
-         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
-         return f.parse(date);
-
-      }
-      catch (Exception ex)
-      {
-
-      }
-
-      try
-      {
-         SimpleDateFormat f = new SimpleDateFormat("MM/dd/yy");
-
-         int lastSlash = date.lastIndexOf("/");
-         if (lastSlash > 0 && lastSlash == date.length() - 5)
-         {
-            f = new SimpleDateFormat("MM/dd/yyyy");
-         }
-         Date d = f.parse(date);
-         //System.out.println(d);
-         return d;
-
-      }
-      catch (Exception ex)
-      {
-
-      }
-
-      try
-      {
-         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
-         return f.parse(date);
-      }
-      catch (Exception ex)
-      {
-
-      }
-      throw new RuntimeException("unsupported format: " + date);
+      return true;
    }
 
 }
