@@ -109,7 +109,7 @@ public class Sql
             else
             {
                stmt = conn.createStatement();
-               stmt.execute(sql,Statement.RETURN_GENERATED_KEYS);
+               stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
             }
 
             if (isInsert(sql))
@@ -402,6 +402,38 @@ public class Sql
       }
       String sql = buildInsertSQL(tableName, keys.toArray());
       return execute(conn, sql, values.toArray());
+   }
+
+   public static void insertMaps(Connection conn, String tableName, List<Map> rows) throws Exception
+   {
+      LinkedHashSet keySet = new LinkedHashSet();
+
+      for (Map row : rows)
+      {
+         keySet.addAll(row.keySet());
+      }
+
+      List<String> keys = new ArrayList(keySet);
+      String sql = buildInsertSQL(tableName, keys.toArray());
+
+      PreparedStatement stmt = conn.prepareStatement(sql);
+      try
+      {
+         for (Map row : rows)
+         {
+            for (int i = 0; i < keys.size(); i++)
+            {
+               Object value = row.get(i);
+               ((PreparedStatement) stmt).setObject(i + 1, value);
+            }
+            stmt.addBatch();
+         }
+         stmt.executeBatch();
+      }
+      finally
+      {
+         Sql.close(stmt);
+      }
    }
 
    public static void insert(Connection conn, Object o) throws Exception
