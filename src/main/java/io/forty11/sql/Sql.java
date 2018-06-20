@@ -1140,6 +1140,18 @@ public class Sql
       {
 
       }
+
+      try
+      {
+         //2018-06-20 01:10:24.0 - mysql timestamp string represnetation
+         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+         return f.parse(date);
+      }
+      catch (Exception ex)
+      {
+
+      }
+
       try
       {
          SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
