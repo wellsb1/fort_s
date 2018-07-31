@@ -423,7 +423,7 @@ public class Sql
          {
             for (int i = 0; i < keys.size(); i++)
             {
-               Object value = row.get(i);
+               Object value = row.get(keys.get(i));
                ((PreparedStatement) stmt).setObject(i + 1, value);
             }
             stmt.addBatch();
