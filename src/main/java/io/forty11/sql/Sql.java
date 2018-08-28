@@ -1102,6 +1102,7 @@ public class Sql
             case Types.BIGINT:
                return Long.parseLong(object.toString());
             case Types.FLOAT:
+            case Types.REAL:
             case Types.DOUBLE:
                return Double.parseDouble(object.toString());
             case Types.DATALINK:
