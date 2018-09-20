@@ -1085,6 +1085,7 @@ public class Sql
          {
             case Types.CHAR:
             case Types.VARCHAR:
+            case Types.LONGVARCHAR:
             case Types.LONGNVARCHAR:
                return object.toString();
             case Types.NUMERIC:
