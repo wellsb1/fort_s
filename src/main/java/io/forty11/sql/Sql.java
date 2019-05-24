@@ -1186,6 +1186,18 @@ public class Sql
 
       try
       {
+         if (date.length() > 8)
+         {
+            return new Date(Long.parseLong(date));
+         }
+      }
+      catch (Exception ex)
+      {
+
+      }
+
+      try
+      {
          SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
          return f.parse(date);
       }
