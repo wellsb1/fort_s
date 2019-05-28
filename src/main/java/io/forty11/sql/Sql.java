@@ -401,6 +401,59 @@ public class Sql
          values.add(row.get(key));
       }
       String sql = buildInsertSQL(tableName, keys.toArray());
+
+      // Late addition to snooze 3 to allow for upserts.
+      // This is necessary for Heartbeats
+      if (true)
+      {
+         sql += " ON DUPLICATE KEY UPDATE ";
+         int size = keys.size();
+         for (int i = 0; i < size; i++)
+         {
+            Object key = keys.get(i);
+            Object value = row.get(key);
+            sql += key + "= ?";
+            values.add(value);
+            if (i + 1 < size)
+            {
+               sql += ", ";
+            }
+         }
+      }
+
+      return execute(conn, sql, values.toArray());
+   }
+   
+   public static Object insertMap(Connection conn, String tableName, Map row, boolean isUpsert) throws Exception
+   {
+      List keys = new ArrayList();
+      List values = new ArrayList();
+      for (Object key : row.keySet())
+      {
+         keys.add(key);
+         values.add(row.get(key));
+      }
+      String sql = buildInsertSQL(tableName, keys.toArray());
+
+      // Late addition for Snooze 3 to allow for upserts.
+      // Necessary for Heartbeats
+      if (true)
+      {
+         sql += " ON DUPLICATE KEY UPDATE ";
+         int size = keys.size();
+         for (int i = 0; i < size; i++)
+         {
+            Object key = keys.get(i);
+            Object value = row.get(key);
+            sql += key + "= ?";
+            values.add(value);
+            if (i + 1 < size)
+            {
+               sql += ", ";
+            }
+         }
+      }
+
       return execute(conn, sql, values.toArray());
    }
 
