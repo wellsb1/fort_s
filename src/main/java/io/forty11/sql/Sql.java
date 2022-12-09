@@ -109,7 +109,7 @@ public class Sql
             else
             {
                stmt = conn.createStatement();
-               stmt.execute(sql,Statement.RETURN_GENERATED_KEYS);
+               stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
             }
 
             if (isInsert(sql))
@@ -391,7 +391,13 @@ public class Sql
       return sql.toString();
    }
 
+
    public static Object insertMap(Connection conn, String tableName, Map row) throws Exception
+   {
+      return insertMap(conn, tableName, row, false);
+   }
+   
+   public static Object insertMap(Connection conn, String tableName, Map row, boolean isUpsert) throws Exception
    {
       List keys = new ArrayList();
       List values = new ArrayList();
@@ -401,7 +407,59 @@ public class Sql
          values.add(row.get(key));
       }
       String sql = buildInsertSQL(tableName, keys.toArray());
+
+      // Late addition for Snooze 3 to allow for upserts.
+      // Necessary for Heartbeats
+      if (isUpsert)
+      {
+         sql += " ON DUPLICATE KEY UPDATE ";
+         int size = keys.size();
+         for (int i = 0; i < size; i++)
+         {
+            Object key = keys.get(i);
+            Object value = row.get(key);
+            sql += key + "= ?";
+            values.add(value);
+            if (i + 1 < size)
+            {
+               sql += ", ";
+            }
+         }
+      }
+
       return execute(conn, sql, values.toArray());
+   }
+
+   public static void insertMaps(Connection conn, String tableName, List<Map> rows) throws Exception
+   {
+      LinkedHashSet keySet = new LinkedHashSet();
+
+      for (Map row : rows)
+      {
+         keySet.addAll(row.keySet());
+      }
+
+      List<String> keys = new ArrayList(keySet);
+      String sql = buildInsertSQL(tableName, keys.toArray());
+
+      PreparedStatement stmt = conn.prepareStatement(sql);
+      try
+      {
+         for (Map row : rows)
+         {
+            for (int i = 0; i < keys.size(); i++)
+            {
+               Object value = row.get(keys.get(i));
+               ((PreparedStatement) stmt).setObject(i + 1, value);
+            }
+            stmt.addBatch();
+         }
+         stmt.executeBatch();
+      }
+      finally
+      {
+         Sql.close(stmt);
+      }
    }
 
    public static void insert(Connection conn, Object o) throws Exception
@@ -1053,6 +1111,7 @@ public class Sql
          {
             case Types.CHAR:
             case Types.VARCHAR:
+            case Types.LONGVARCHAR:
             case Types.LONGNVARCHAR:
                return object.toString();
             case Types.NUMERIC:
@@ -1070,6 +1129,7 @@ public class Sql
             case Types.BIGINT:
                return Long.parseLong(object.toString());
             case Types.FLOAT:
+            case Types.REAL:
             case Types.DOUBLE:
                return Double.parseDouble(object.toString());
             case Types.DATALINK:
@@ -1108,6 +1168,18 @@ public class Sql
       {
 
       }
+
+      try
+      {
+         //2018-06-20 01:10:24.0 - mysql timestamp string represnetation
+         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+         return f.parse(date);
+      }
+      catch (Exception ex)
+      {
+
+      }
+
       try
       {
          SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
@@ -1132,6 +1204,18 @@ public class Sql
          //System.out.println(d);
          return d;
 
+      }
+      catch (Exception ex)
+      {
+
+      }
+
+      try
+      {
+         if (date.length() > 8)
+         {
+            return new Date(Long.parseLong(date));
+         }
       }
       catch (Exception ex)
       {
